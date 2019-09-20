@@ -8,27 +8,14 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
 	echo "# archive.sh Music-2019-09-19-15-25-42.tar.gz --delete a.mp3 b.mp3 # deleting two mp3 files from Music-2019-09-19-15-25-42.tar.gz archive"
 	exit 0;
 fi
-# by default, directory to archive is current one
+if [ $# -gt 2 ] && [ "$2" = "--delete" -o "$2" = "-d" ] && [ -f $1 ]; then
+		pigz -d < $1 | tar -f - --delete "${@:3}" | pigz > updated.tar.gz
+fi
 directory_name=$(pwd)
 next_index=1
-# if number of arguments bigger than one and the first argument is valid directory name
 if [ $# -ge 1 ] && [ -d $1 ]; then
 	directory_name=$1
 	next_index=2
-fi
-if [ $# -eq 1 ] && [ "${!next_index}" = "--delete" -o "${!next_index}" = "-d" ]; then
-	echo "You have to specify on which archive use delete option. Refer to --help information.";
-	exit 1
-fi
-# if number of arguments bigger than two and the second argument is the delete option
-if [ $# -gt 2 ] && [ "$2" = "--delete" -o "$2" = "-d" ]; then
-	if [ -f $1 ]; then
-		pigz -d < $1 | tar -f - --delete "${@:3}" | pigz > updated.tar.gz
-		exit 0
-	else
-		echo $1 "does not exist"
-		exit 1
-	fi
 fi
 older_than=1
 if [ $next_index -eq $# ]; then
@@ -36,7 +23,7 @@ if [ $next_index -eq $# ]; then
 fi
 files=()
 while read -r -d $'\0'; do files+=("$REPLY")
-done < <(find $1 -type f -ctime +$older_than -print0)
-archive_name="$1-$(date +"%Y-%m-%d-%H-%M-%S")"
+done < <(find $directory_name -type f -ctime +$older_than -print0)
+archive_name="$directory_name-$(date +"%Y-%m-%d-%H-%M-%S")"
 tar -czvf ${archive_name}.tar.gz "${files[@]}"
 exit 0
