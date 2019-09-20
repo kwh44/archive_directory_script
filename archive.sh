@@ -18,22 +18,25 @@ if [ $# -ge 1 ] && [ -d $1 ]; then
 fi
 if [ $# -eq 1 ] && [ "${!next_index}" = "--delete" -o "${!next_index}" = "-d" ]; then
 	echo "You have to specify on which archive use delete option. Refer to --help information.";
-	exit 0;
+	exit 1
 fi
 # if number of arguments bigger than two and the second argument is the delete option
 if [ $# -gt 2 ] && [ "$2" = "--delete" -o "$2" = "-d" ]; then
-# https://unix.stackexchange.com/a/80252
-	pigz -d < $1 | tar -f - --delete "${@:3}" | pigz > updated-"$1".tar.gz
-	exit 0
+	if [ -f $1 ]; then
+		pigz -d < $1 | tar -f - --delete "${@:3}" | pigz > updated.tar.gz
+		exit 0
+	else
+		echo $1 "does not exist"
+		exit 1
+	fi
 fi
 older_than=1
 if [ $next_index -eq $# ]; then
 	older_than=${!next_index}
 fi
-archive_name="$1-$(date +"%Y-%m-%d-%H-%M-%S")"
-# https://stackoverflow.com/a/23357277
 files=()
 while read -r -d $'\0'; do files+=("$REPLY")
 done < <(find $1 -type f -ctime +$older_than -print0)
+archive_name="$1-$(date +"%Y-%m-%d-%H-%M-%S")"
 tar -czvf ${archive_name}.tar.gz "${files[@]}"
 exit 0
