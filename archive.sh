@@ -6,12 +6,12 @@ print_help_info () {
 	echo "# archive.sh # archiving current working directory files modified more than one day ago"
 	echo "# archive.sh Documents # archiving files in Documents directory modified more than one day ago"
 	echo "# archive.sh Pictures 4 # archiving files in Pictures directory modified more than four days ago"
-	echo "# archive.sh Music-2019-09-19-15-25-42.tar.gz --delete a.mp3 b.mp3 # deleting two mp3 files from Music-2019-09-19-15-25-42.tar.gz archive"
+	echo "# archive.sh Documents/Books-2019-09-25-17-26-54.tar.gz -d Documents/Books/c_cpp/08PLDI.pdf Documents/Books/c_cpp/abstraction-and-machine.pdf  # deleting pdf files from archive"
 	return 0;
 }
 
 delete_files_from_tgz () {
-	pigz -d < $1 | tar -f - --delete "${@:3}" | pigz > updated.tar.gz
+	pigz -d < $1 | tar -f - --delete "${@:3}" | pigz -p4 > "$1"-updated-"$(date +"%Y-%m-%d-%H-%M-%S")".tar.gz
 	return 0
 }
 
@@ -30,7 +30,7 @@ create_tgz () {
 	while read -r -d $'\0'; do files+=("$REPLY")
 	done < <(find $directory_name -type f -ctime +$older_than -print0)
 	archive_name="$directory_name-$(date +"%Y-%m-%d-%H-%M-%S")"
-	tar -czvf ${archive_name}.tar.gz "${files[@]}"
+	tar -c "${files[@]}" | pigz -p4 > ${archive_name}.tar.gz
 	return 0
 }
 
